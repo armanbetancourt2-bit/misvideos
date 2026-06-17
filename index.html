@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Instagram</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #fff; color: #000; }
+.ig-wrap { max-width: 470px; margin: 0 auto; background: #fff; min-height: 100vh; }
+.ig-header { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-bottom: 0.5px solid #dbdbdb; position: sticky; top: 0; background: #fff; z-index: 10; }
+.ig-logo { font-size: 24px; font-weight: 700; letter-spacing: -1px; color: #000; font-family: Georgia, serif; }
+.ig-header-icons { display: flex; gap: 18px; color: #000; font-size: 24px; cursor: pointer; }
+.save-bar { display: flex; align-items: center; justify-content: center; padding: 10px 16px; border-top: 0.5px solid #dbdbdb; background: #fff; gap: 10px; }
+.btn-export { background: #2ecc71; border: none; border-radius: 22px; padding: 11px 24px; font-size: 14px; font-weight: 700; color: #fff; cursor: pointer; box-shadow: 0 2px 8px rgba(46,204,113,0.3); display: flex; align-items: center; gap: 7px; }
+.btn-export:active { opacity: 0.85; }
+.save-toast { position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%); background: #222; color: #fff; font-size: 13px; padding: 9px 20px; border-radius: 22px; z-index: 300; opacity: 0; transition: opacity 0.3s; pointer-events: none; white-space: nowrap; }
+.post-card { border-bottom: 0.5px solid #dbdbdb; }
+.post-header { display: flex; align-items: center; padding: 10px 14px; gap: 10px; }
+.post-avatar { width: 38px; height: 38px; border-radius: 50%; overflow: hidden; border: 1px solid #dbdbdb; flex-shrink: 0; background: #efefef; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+.post-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.post-user-info { flex: 1; }
+.post-username { font-size: 13.5px; font-weight: 600; color: #000; }
+.post-location { font-size: 11px; color: #8e8e8e; }
+.edit-btn { background: none; border: 0.5px solid #dbdbdb; border-radius: 6px; font-size: 11px; color: #8e8e8e; padding: 3px 9px; cursor: pointer; }
+.post-more { font-size: 22px; color: #000; cursor: pointer; padding: 4px; }
+.post-media { width: 100%; aspect-ratio: 1; background: #efefef; overflow: hidden; position: relative; }
+.post-media img, .post-media video { width: 100%; height: 100%; object-fit: cover; display: block; }
+.video-label { position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.55); color: #fff; font-size: 11px; padding: 3px 8px; border-radius: 5px; }
+.post-actions { display: flex; align-items: center; padding: 8px 14px 4px; gap: 14px; }
+.action-btn { font-size: 26px; color: #000; cursor: pointer; background: none; border: none; padding: 2px; line-height: 1; }
+.action-spacer { flex: 1; }
+.post-likes { padding: 2px 14px 4px; font-size: 14px; font-weight: 600; color: #000; }
+.post-caption { padding: 0 14px 8px; font-size: 14px; color: #000; line-height: 1.4; }
+.post-caption .uname { font-weight: 600; }
+.post-comments { padding: 0 14px 6px; font-size: 13px; color: #8e8e8e; cursor: pointer; }
+.post-time { padding: 0 14px 14px; font-size: 10px; color: #c7c7c7; letter-spacing: 0.4px; text-transform: uppercase; }
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 200; display: flex; align-items: center; justify-content: center; }
+.modal-box { background: #fff; border-radius: 16px; padding: 22px; width: 340px; max-width: 92vw; max-height: 90vh; overflow-y: auto; }
+.modal-title { font-size: 16px; font-weight: 700; margin-bottom: 18px; color: #000; text-align: center; }
+.modal-field { margin-bottom: 14px; }
+.modal-field label { font-size: 12px; color: #8e8e8e; margin-bottom: 5px; display: block; }
+.modal-field input, .modal-field textarea, .modal-field select {
+  width: 100%; border: 1px solid #dbdbdb; border-radius: 8px;
+  padding: 9px 11px; font-size: 14px; background: #fafafa; color: #000;
+  font-family: inherit; resize: none; outline: none;
+}
+.modal-field input:focus, .modal-field textarea:focus { border-color: #aaa; background: #fff; }
+.modal-field textarea { min-height: 72px; }
+.modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 6px; }
+.btn-cancel { background: none; border: 1px solid #dbdbdb; border-radius: 8px; padding: 8px 18px; font-size: 14px; cursor: pointer; color: #000; }
+.btn-save { background: #0095f6; border: none; border-radius: 8px; padding: 8px 18px; font-size: 14px; cursor: pointer; color: #fff; font-weight: 700; }
+.avatar-upload { display: flex; align-items: center; gap: 14px; margin-bottom: 18px; }
+.avatar-preview { width: 68px; height: 68px; border-radius: 50%; overflow: hidden; background: #efefef; display: flex; align-items: center; justify-content: center; font-size: 30px; border: 1px solid #dbdbdb; flex-shrink: 0; }
+.avatar-preview img { width: 100%; height: 100%; object-fit: cover; }
+.btn-change-photo { background: none; border: none; color: #0095f6; font-size: 14px; font-weight: 700; cursor: pointer; }
+.emoji-grid { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 14px; }
+.emoji-btn { font-size: 24px; background: none; border: 1.5px solid #dbdbdb; border-radius: 50%; width: 42px; height: 42px; cursor: pointer; }
+.emoji-btn:hover { border-color: #0095f6; }
+.media-url-row { display: flex; gap: 7px; align-items: center; }
+.media-url-row input { flex: 1; }
+.btn-apply { background: #0095f6; border: none; border-radius: 7px; padding: 9px 13px; font-size: 12px; color: #fff; cursor: pointer; white-space: nowrap; font-weight: 600; }
+.float-edit { position: fixed; bottom: 76px; right: 14px; z-index: 100; background: #0095f6; color: #fff; border: none; border-radius: 22px; padding: 10px 18px; font-size: 14px; font-weight: 700; cursor: pointer; box-shadow: 0 3px 12px rgba(0,0,0,0.25); }
+</style>
+</head>
+<body>
+<div class="ig-wrap" id="igWrap">
+  <div class="ig-header">
+    <div class="ig-logo">Instagram</div>
+    <div class="ig-header-icons">
+      <i class="ti ti-heart"></i>
+      <i class="ti ti-send"></i>
+    </div>
+  </div>
+  <div id="feedContainer"><div class="post-card" id="post-1"><div class="post-header"><div class="post-avatar"><img src="https://imagenes2.mundodeportivo.com/files/content_image_desktop_filter/files/fp/uploads/2023/05/18/6465af620734c.r_d.1005-910.jpeg" alt="avatar" onerror="this.style.display='none'"></div><div class="post-user-info"><div class="post-username">FIFA</div><div class="post-location">Barcelona, Spain</div></div><button class="edit-btn" onclick="openEditPost(1)">✏️ Edit</button><span class="post-more">···</span></div><div class="post-media"><video src="https://github.com/armanbetancourt2-bit/misvideos/raw/refs/heads/main/shakira.mp4" autoplay="" muted="" loop="" playsinline="" style="width:100%;height:100%;object-fit:cover"></video><span class="video-label">▶ Video</span></div><div class="post-actions"><button class="action-btn" onclick="toggleLike(1)">🤍</button><button class="action-btn">💬</button><button class="action-btn">📤</button><div class="action-spacer"></div><button class="action-btn">🔖</button></div><div class="post-likes">19.384.740 likes</div><div class="post-caption"><span class="uname">FIFA</span> SHAKIRA!</div><div class="post-comments">View all 14 comments</div><div class="post-time">2 HOURS AGO</div></div><div class="post-card" id="post-2"><div class="post-header"><div class="post-avatar"><img src="https://pbs.twimg.com/profile_images/1919873800700887040/AC5g9mVJ.jpg" alt="avatar" onerror="this.style.display='none'"></div><div class="post-user-info"><div class="post-username">random_random</div><div class="post-location">Japan</div></div><button class="edit-btn" onclick="openEditPost(2)">✏️ Edit</button><span class="post-more">···</span></div><div class="post-media"><video src="https://github.com/armanbetancourt2-bit/misvideos/raw/refs/heads/main/baile%202.mp4" autoplay="" muted="" loop="" playsinline="" style="width:100%;height:100%;object-fit:cover"></video><span class="video-label">▶ Video</span></div><div class="post-actions"><button class="action-btn" onclick="toggleLike(2)">❤️</button><button class="action-btn">💬</button><button class="action-btn">📤</button><div class="action-spacer"></div><button class="action-btn">🔖</button></div><div class="post-likes">9.383.718 likes</div><div class="post-caption"><span class="uname">random_random</span> Video of the week</div><div class="post-comments">View all 32 comments</div><div class="post-time">4 HOURS AGO</div></div><div class="post-card" id="post-3"><div class="post-header"><div class="post-avatar"><img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcShmVGAiiKg51MKF92P6E16vNeO6U56o9knvw&amp;s" alt="avatar" onerror="this.style.display='none'"></div><div class="post-user-info"><div class="post-username">juancho_cine</div><div class="post-location">California</div></div><button class="edit-btn" onclick="openEditPost(3)">✏️ Edit</button><span class="post-more">···</span></div><div class="post-media"><img src="https://m.media-amazon.com/images/M/MV5BMjI5OTUzYzItYjFkMy00NDEzLTlhZDctNzk4OTViMjAzMjdlXkEyXkFqcGc@._V1_FMjpg_UX1000_.jpg" alt="post" loading="lazy"></div><div class="post-actions"><button class="action-btn" onclick="toggleLike(3)">🤍</button><button class="action-btn">💬</button><button class="action-btn">📤</button><div class="action-spacer"></div><button class="action-btn">🔖</button></div><div class="post-likes">102 likes</div><div class="post-caption"><span class="uname">juancho_cine</span> and... ACTION!</div><div class="post-comments">View all 67 comments</div><div class="post-time">6 HOURS AGO</div></div><div class="post-card" id="post-4"><div class="post-header"><div class="post-avatar"><img src="https://upload.wikimedia.org/wikipedia/commons/6/66/CNN_International_logo.svg" alt="avatar" onerror="this.style.display='none'"></div><div class="post-user-info"><div class="post-username">CNN</div><div class="post-location">NY</div></div><button class="edit-btn" onclick="openEditPost(4)">✏️ Edit</button><span class="post-more">···</span></div><div class="post-media"><img src="https://scontent-mad2-1.cdninstagram.com/v/t51.82787-15/656809771_18576002260051922_7383181931652039344_n.jpg?stp=dst-jpg_e35_tt6&amp;_nc_cat=111&amp;ig_cache_key=Mzg2MjUwNzI5OTU1MDQwNDIxNA%3D%3D.3-ccb7-5&amp;ccb=7-5&amp;_nc_sid=58cdad&amp;efg=eyJ2ZW5jb2RlX3RhZyI6IkZFRUQueHBpZHMuMTA4MC5zZHIucmVndWxhcl9waG90by5DMyJ9&amp;_nc_ohc=Z-Gd9kBpiugQ7kNvwGBfsHb&amp;_nc_oc=AdrFe_ZcW8YtyHqBWtMLzM1QUqGSBa9sG-SEgcnoMJmYTVRfQZON4r4PDoh5zPn7TfI&amp;_nc_zt=23&amp;_nc_ht=scontent-mad2-1.cdninstagram.com&amp;_nc_gid=EiHlvDO8xFyJluVSdWJtVg&amp;_nc_ss=7b689&amp;oh=00_Af-9FpxLAGD15mIXCYFW7KtFcDwOoKaKXaX9JMqxBv8uJQ&amp;oe=6A3835D8" alt="post" loading="lazy"></div><div class="post-actions"><button class="action-btn" onclick="toggleLike(4)">🤍</button><button class="action-btn">💬</button><button class="action-btn">📤</button><div class="action-spacer"></div><button class="action-btn">🔖</button></div><div class="post-likes">3911 likes</div><div class="post-caption"><span class="uname">CNN</span> Braking News!</div><div class="post-comments">View all 21 comments</div><div class="post-time">8 HOURS AGO</div></div><div class="post-card" id="post-5"><div class="post-header"><div class="post-avatar"><img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR6twPYsY2vnFlOf5kwvnFYlDlZwDj3TaS23Q&amp;s" alt="avatar" onerror="this.style.display='none'"></div><div class="post-user-info"><div class="post-username">ESPN_News</div><div class="post-location">Ny</div></div><button class="edit-btn" onclick="openEditPost(5)">✏️ Edit</button><span class="post-more">···</span></div><div class="post-media"><img src="https://pbs.twimg.com/media/G55FznvX0AAUSdd.jpg" alt="post" loading="lazy"></div><div class="post-actions"><button class="action-btn" onclick="toggleLike(5)">❤️</button><button class="action-btn">💬</button><button class="action-btn">📤</button><div class="action-spacer"></div><button class="action-btn">🔖</button></div><div class="post-likes">193.838 likes</div><div class="post-caption"><span class="uname">ESPN_News</span> The king its retiring!</div><div class="post-comments">View all 45 comments</div><div class="post-time">10 HOURS AGO</div></div><div class="post-card" id="post-6"><div class="post-header"><div class="post-avatar"><span style="font-size:19px">📷</span></div><div class="post-user-info"><div class="post-username">explore_es</div><div class="post-location">Granada, Spain</div></div><button class="edit-btn" onclick="openEditPost(6)">✏️ Edit</button><span class="post-more">···</span></div><div class="post-media"><img src="https://images.unsplash.com/photo-1465146344425-f00d5f5c8f07?w=600&amp;q=80" alt="post" loading="lazy"></div><div class="post-actions"><button class="action-btn" onclick="toggleLike(6)">🤍</button><button class="action-btn">💬</button><button class="action-btn">📤</button><div class="action-spacer"></div><button class="action-btn">🔖</button></div><div class="post-likes">2341 likes</div><div class="post-caption"><span class="uname">explore_es</span> Alhambra at dawn 🕌 A magical place I'll never forget.</div><div class="post-comments">View all 118 comments</div><div class="post-time">1 DAY AGO</div></div></div>
+  <div class="save-bar">
+    <button class="btn-export" onclick="exportHTML()">💾 Save my page</button>
+  </div>
+</div>
+<div class="save-toast" id="saveToast" style="opacity: 0;">✅ Page saved!</div>
+<button class="float-edit" onclick="openEditProfile()" style="bottom:70px">✏️ Edit profile</button>
+<div id="modalOverlay" class="modal-overlay" style="display: none;"><div class="modal-box"><div class="modal-title">Edit post</div><div style="background:#fafafa;border:1px solid #dbdbdb;border-radius:12px;padding:14px;margin-bottom:16px"><div style="font-size:11px;font-weight:700;color:#8e8e8e;letter-spacing:0.5px;margin-bottom:10px">PROFILE</div><div class="avatar-upload" style="margin-bottom:10px"><div class="avatar-preview" id="postAvPrev"><img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR6twPYsY2vnFlOf5kwvnFYlDlZwDj3TaS23Q&amp;s" alt="avatar" onerror="this.style.display='none'"></div><div><div style="font-size:12px;color:#8e8e8e;margin-bottom:5px">Profile photo</div><button class="btn-change-photo" onclick="showPostEmojiPicker(5)">Choose emoji</button></div></div><div id="postEmojiPicker"></div><div class="modal-field" style="margin-bottom:0"><label>Profile photo URL</label><div class="media-url-row"><input id="editPostAvatarUrl" placeholder="https://..." value="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR6twPYsY2vnFlOf5kwvnFYlDlZwDj3TaS23Q&amp;s"><button class="btn-apply" onclick="previewPostAv()">Preview</button></div></div></div><div style="background:#fafafa;border:1px solid #dbdbdb;border-radius:12px;padding:14px;margin-bottom:16px"><div style="font-size:11px;font-weight:700;color:#8e8e8e;letter-spacing:0.5px;margin-bottom:10px">POST</div><div class="modal-field"><label>Username</label><input id="editPostUser" value="ESPN_News"></div><div class="modal-field"><label>Location</label><input id="editLocation" value="Ny"></div><div class="modal-field"><label>Media type</label><select id="editType"><option value="photo" selected="">📷 Photo</option><option value="video">🎬 Video</option></select></div><div class="modal-field"><label>Image / video URL</label><div class="media-url-row"><input id="editMediaUrl" value="https://pbs.twimg.com/media/G55FznvX0AAUSdd.jpg" placeholder="https://..."></div><div style="margin-top:5px;font-size:11px;color:#aaa">Photos: Unsplash · Videos: direct .mp4 link</div></div><div class="modal-field"><label>Caption</label><textarea id="editCaption">Sunset from the bridge 🌆 The most beautiful moment of the day.</textarea></div><div class="modal-field" style="margin-bottom:0"><label>Likes</label><input id="editLikes" type="number" value="193838"></div></div><div class="modal-actions"><button class="btn-cancel" onclick="closeModal()">Cancel</button><button class="btn-save" onclick="savePost(5)">Save</button></div></div></div>
+
+<script>
+const state = {"profile":{"username":"my_account","avatar":"","avatarEmoji":"🙂"},"posts":[{"id":1,"type":"video","mediaUrl":"https://github.com/armanbetancourt2-bit/misvideos/raw/refs/heads/main/shakira.mp4","username":"FIFA","location":"Barcelona, Spain","caption":"SHAKIRA!","likes":19384740,"comments":14,"time":"2 hours ago","liked":false},{"id":2,"type":"video","mediaUrl":"https://github.com/armanbetancourt2-bit/misvideos/raw/refs/heads/main/baile%202.mp4","username":"random_random","location":"Japan","caption":"Video of the week","likes":9383718,"comments":32,"time":"4 hours ago","liked":true},{"id":3,"type":"photo","mediaUrl":"https://m.media-amazon.com/images/M/MV5BMjI5OTUzYzItYjFkMy00NDEzLTlhZDctNzk4OTViMjAzMjdlXkEyXkFqcGc@._V1_FMjpg_UX1000_.jpg","username":"juancho_cine","location":"California","caption":"and... ACTION!","likes":102,"comments":67,"time":"6 hours ago","liked":false},{"id":4,"type":"photo","mediaUrl":"https://scontent-mad2-1.cdninstagram.com/v/t51.82787-15/656809771_18576002260051922_7383181931652039344_n.jpg?stp=dst-jpg_e35_tt6&_nc_cat=111&ig_cache_key=Mzg2MjUwNzI5OTU1MDQwNDIxNA%3D%3D.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkZFRUQueHBpZHMuMTA4MC5zZHIucmVndWxhcl9waG90by5DMyJ9&_nc_ohc=Z-Gd9kBpiugQ7kNvwGBfsHb&_nc_oc=AdrFe_ZcW8YtyHqBWtMLzM1QUqGSBa9sG-SEgcnoMJmYTVRfQZON4r4PDoh5zPn7TfI&_nc_zt=23&_nc_ht=scontent-mad2-1.cdninstagram.com&_nc_gid=EiHlvDO8xFyJluVSdWJtVg&_nc_ss=7b689&oh=00_Af-9FpxLAGD15mIXCYFW7KtFcDwOoKaKXaX9JMqxBv8uJQ&oe=6A3835D8","username":"CNN","location":"NY","caption":"Braking News!","likes":3911,"comments":21,"time":"8 hours ago","liked":false},{"id":5,"type":"photo","mediaUrl":"https://pbs.twimg.com/media/G55FznvX0AAUSdd.jpg","username":"ESPN_News","location":"Ny","caption":"The king its retiring!","likes":193838,"comments":45,"time":"10 hours ago","liked":true},{"id":6,"type":"photo","mediaUrl":"https://images.unsplash.com/photo-1465146344425-f00d5f5c8f07?w=600&q=80","username":"explore_es","location":"Granada, Spain","caption":"Alhambra at dawn 🕌 A magical place I'll never forget.","likes":2341,"comments":118,"time":"1 day ago","liked":false}]};
+
+const avatarEmojis = ["🙂","😎","🤩","🥰","🧑","👩","👨","🧔","👤","🐱","🐶","🦊","🌟","🎭"];
+// Per-post avatar state: keyed by post id
+const postAvatars = {"1":{"url":"https://imagenes2.mundodeportivo.com/files/content_image_desktop_filter/files/fp/uploads/2023/05/18/6465af620734c.r_d.1005-910.jpeg","emoji":"📷"},"2":{"url":"https://pbs.twimg.com/profile_images/1919873800700887040/AC5g9mVJ.jpg","emoji":"📷"},"3":{"url":"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcShmVGAiiKg51MKF92P6E16vNeO6U56o9knvw&s","emoji":"📷"},"4":{"url":"https://upload.wikimedia.org/wikipedia/commons/6/66/CNN_International_logo.svg","emoji":"📷"},"5":{"url":"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR6twPYsY2vnFlOf5kwvnFYlDlZwDj3TaS23Q&s","emoji":"📷"},"6":{"url":"","emoji":"📷"}}; // { id: { url: "", emoji: "🙂" } }
+function getPostAvatar(post) {
+  if (!postAvatars[post.id]) postAvatars[post.id] = { url: "", emoji: "📷" };
+  return postAvatars[post.id];
+}
+
+function getAvatarHTML(url, emoji, size) {
+  size = size || 38;
+  if (url) return '<img src="' + url + '" alt="avatar" onerror="this.style.display=\'none\'">';
+  return '<span style="font-size:' + Math.round(size * 0.5) + 'px">' + (emoji || "🙂") + '</span>';
+}
+
+function renderStories() {
+  const bar = document.getElementById("storiesBar");
+  const seen = {};
+  const items = [{ name: "Your story", isAdd: true }];
+  state.posts.forEach(function(p) {
+    if (!seen[p.username]) { seen[p.username] = true; items.push({ name: p.username, isAdd: false }); }
+  });
+  bar.innerHTML = items.map(function(u) {
+    return '<div class="story-item"><div class="story-ring"><div class="story-inner">'
+      + (u.isAdd ? '<span style="font-size:22px;color:#0095f6">+</span>' : '<span style="font-size:20px">📷</span>')
+      + '</div></div><span class="story-name">' + u.name + '</span></div>';
+  }).join("");
+}
+
+function renderFeed() {
+  const feed = document.getElementById("feedContainer");
+  feed.innerHTML = state.posts.map(function(post) {
+    const isOwn = post.username === state.profile.username;
+    const pav = getPostAvatar(post);
+    const avUrl = pav.url || (isOwn ? state.profile.avatar : "");
+    const avEmoji = pav.emoji !== "📷" ? pav.emoji : (isOwn ? state.profile.avatarEmoji : "📷");
+    const avHtml = getAvatarHTML(avUrl, avEmoji);
+    return '<div class="post-card" id="post-' + post.id + '">'
+      + '<div class="post-header">'
+      + '<div class="post-avatar">' + avHtml + '</div>'
+      + '<div class="post-user-info"><div class="post-username">' + post.username + '</div><div class="post-location">' + post.location + '</div></div>'
+      + '<button class="edit-btn" onclick="openEditPost(' + post.id + ')">✏️ Edit</button>'
+      + '<span class="post-more">···</span></div>'
+      + '<div class="post-media">'
+      + (post.type === "video"
+          ? '<video src="' + post.mediaUrl + '" autoplay muted loop playsinline style="width:100%;height:100%;object-fit:cover"></video><span class="video-label">▶ Video</span>'
+          : '<img src="' + post.mediaUrl + '" alt="post" loading="lazy">')
+      + '</div>'
+      + '<div class="post-actions">'
+      + '<button class="action-btn" onclick="toggleLike(' + post.id + ')">' + (post.liked ? '❤️' : '🤍') + '</button>'
+      + '<button class="action-btn">💬</button>'
+      + '<button class="action-btn">📤</button>'
+      + '<div class="action-spacer"></div>'
+      + '<button class="action-btn">🔖</button>'
+      + '</div>'
+      + '<div class="post-likes">' + post.likes.toLocaleString() + ' likes</div>'
+      + '<div class="post-caption"><span class="uname">' + post.username + '</span> ' + post.caption + '</div>'
+      + '<div class="post-comments">View all ' + post.comments + ' comments</div>'
+      + '<div class="post-time">' + post.time.toUpperCase() + '</div>'
+      + '</div>';
+  }).join("");
+}
+
+function toggleLike(id) {
+  const post = state.posts.find(function(p){ return p.id === id; });
+  if (!post) return;
+  post.liked = !post.liked;
+  post.likes += post.liked ? 1 : -1;
+  renderFeed();
+}
+
+function openModal(html) {
+  const o = document.getElementById("modalOverlay");
+  o.innerHTML = '<div class="modal-box">' + html + '</div>';
+  o.style.display = "flex";
+}
+function closeModal() { document.getElementById("modalOverlay").style.display = "none"; }
+
+function openEditProfile() {
+  openModal(
+    '<div class="modal-title">Edit profile</div>'
+    + '<div class="avatar-upload">'
+    + '<div class="avatar-preview" id="modalAvPrev">' + getAvatarHTML(state.profile.avatar, state.profile.avatarEmoji, 68) + '</div>'
+    + '<div><div style="font-size:13px;font-weight:700;margin-bottom:7px">' + state.profile.username + '</div>'
+    + '<button class="btn-change-photo" onclick="showEmojiPicker()">Change profile photo</button></div></div>'
+    + '<div id="emojiPicker"></div>'
+    + '<div class="modal-field"><label>Username</label><input id="editUsername" value="' + state.profile.username + '"></div>'
+    + '<div class="modal-field"><label>Profile photo URL (optional)</label>'
+    + '<div class="media-url-row"><input id="editAvatarUrl" placeholder="https://..." value="' + state.profile.avatar + '">'
+    + '<button class="btn-apply" onclick="previewAv()">Preview</button></div></div>'
+    + '<div class="modal-actions"><button class="btn-cancel" onclick="closeModal()">Cancel</button>'
+    + '<button class="btn-save" onclick="saveProfile()">Save</button></div>'
+  );
+}
+
+function showEmojiPicker() {
+  document.getElementById("emojiPicker").innerHTML =
+    '<div style="margin-bottom:14px"><div style="font-size:12px;color:#8e8e8e;margin-bottom:8px">Choose an emoji:</div>'
+    + '<div class="emoji-grid">' + avatarEmojis.map(function(e){ return '<button class="emoji-btn" onclick="pickEmoji(\'' + e + '\')">' + e + '</button>'; }).join("") + '</div></div>';
+}
+
+function pickEmoji(emoji) {
+  state.profile.avatarEmoji = emoji;
+  state.profile.avatar = "";
+  const p = document.getElementById("modalAvPrev");
+  if (p) p.innerHTML = '<span style="font-size:32px">' + emoji + '</span>';
+  const u = document.getElementById("editAvatarUrl");
+  if (u) u.value = "";
+}
+
+function previewAv() {
+  const url = document.getElementById("editAvatarUrl").value.trim();
+  const p = document.getElementById("modalAvPrev");
+  if (url && p) p.innerHTML = '<img src="' + url + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%">';
+}
+
+function saveProfile() {
+  const newUser = document.getElementById("editUsername").value.trim();
+  const newUrl = document.getElementById("editAvatarUrl").value.trim();
+  if (newUser) {
+    const old = state.profile.username;
+    state.posts.forEach(function(p){ if (p.username === old) p.username = newUser; });
+    state.profile.username = newUser;
+  }
+  if (newUrl) state.profile.avatar = newUrl;
+  closeModal(); renderStories(); renderFeed();
+}
+
+function openEditPost(id) {
+  const post = state.posts.find(function(p){ return p.id === id; });
+  if (!post) return;
+  const pav = getPostAvatar(post);
+  const curAvHtml = getAvatarHTML(pav.url, pav.emoji, 68);
+  openModal(
+    '<div class="modal-title">Edit post</div>'
+
+    // ── Profile section ──
+    + '<div style="background:#fafafa;border:1px solid #dbdbdb;border-radius:12px;padding:14px;margin-bottom:16px">'
+    + '<div style="font-size:11px;font-weight:700;color:#8e8e8e;letter-spacing:0.5px;margin-bottom:10px">PROFILE</div>'
+    + '<div class="avatar-upload" style="margin-bottom:10px">'
+    + '<div class="avatar-preview" id="postAvPrev">' + curAvHtml + '</div>'
+    + '<div><div style="font-size:12px;color:#8e8e8e;margin-bottom:5px">Profile photo</div>'
+    + '<button class="btn-change-photo" onclick="showPostEmojiPicker(' + id + ')">Choose emoji</button></div></div>'
+    + '<div id="postEmojiPicker"></div>'
+    + '<div class="modal-field" style="margin-bottom:0"><label>Profile photo URL</label>'
+    + '<div class="media-url-row"><input id="editPostAvatarUrl" placeholder="https://..." value="' + pav.url + '">'
+    + '<button class="btn-apply" onclick="previewPostAv()">Preview</button></div></div>'
+    + '</div>'
+
+    // ── Post section ──
+    + '<div style="background:#fafafa;border:1px solid #dbdbdb;border-radius:12px;padding:14px;margin-bottom:16px">'
+    + '<div style="font-size:11px;font-weight:700;color:#8e8e8e;letter-spacing:0.5px;margin-bottom:10px">POST</div>'
+    + '<div class="modal-field"><label>Username</label><input id="editPostUser" value="' + post.username + '"></div>'
+    + '<div class="modal-field"><label>Location</label><input id="editLocation" value="' + post.location + '"></div>'
+    + '<div class="modal-field"><label>Media type</label>'
+    + '<select id="editType"><option value="photo"' + (post.type==="photo"?" selected":"") + '>📷 Photo</option>'
+    + '<option value="video"' + (post.type==="video"?" selected":"") + '>🎬 Video</option></select></div>'
+    + '<div class="modal-field"><label>Image / video URL</label>'
+    + '<div class="media-url-row"><input id="editMediaUrl" value="' + post.mediaUrl + '" placeholder="https://..."></div>'
+    + '<div style="margin-top:5px;font-size:11px;color:#aaa">Photos: Unsplash · Videos: direct .mp4 link</div></div>'
+    + '<div class="modal-field"><label>Caption</label><textarea id="editCaption">' + post.caption + '</textarea></div>'
+    + '<div class="modal-field" style="margin-bottom:0"><label>Likes</label><input id="editLikes" type="number" value="' + post.likes + '"></div>'
+    + '</div>'
+
+    + '<div class="modal-actions"><button class="btn-cancel" onclick="closeModal()">Cancel</button>'
+    + '<button class="btn-save" onclick="savePost(' + id + ')">Save</button></div>'
+  );
+}
+
+function showPostEmojiPicker(id) {
+  document.getElementById("postEmojiPicker").innerHTML =
+    '<div style="margin-bottom:10px"><div class="emoji-grid">'
+    + avatarEmojis.map(function(e){ return '<button class="emoji-btn" onclick="pickPostEmoji(\'' + e + '\',' + id + ')">' + e + '</button>'; }).join("")
+    + '</div></div>';
+}
+
+function pickPostEmoji(emoji, id) {
+  const pav = getPostAvatar(state.posts.find(function(p){ return p.id===id; }));
+  pav.emoji = emoji; pav.url = "";
+  const p = document.getElementById("postAvPrev");
+  if (p) p.innerHTML = '<span style="font-size:32px">' + emoji + '</span>';
+  const u = document.getElementById("editPostAvatarUrl");
+  if (u) u.value = "";
+}
+
+function previewPostAv() {
+  const url = document.getElementById("editPostAvatarUrl").value.trim();
+  const p = document.getElementById("postAvPrev");
+  if (url && p) p.innerHTML = '<img src="' + url + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%">';
+}
+
+function savePost(id) {
+  const post = state.posts.find(function(p){ return p.id === id; });
+  if (!post) return;
+  // Save avatar
+  const pav = getPostAvatar(post);
+  const avUrl = document.getElementById("editPostAvatarUrl").value.trim();
+  if (avUrl) { pav.url = avUrl; pav.emoji = "📷"; }
+  // Save post fields
+  post.type = document.getElementById("editType").value;
+  const url = document.getElementById("editMediaUrl").value.trim();
+  if (url) post.mediaUrl = url;
+  const u = document.getElementById("editPostUser").value.trim();
+  if (u) post.username = u;
+  const l = document.getElementById("editLocation").value.trim();
+  if (l) post.location = l;
+  const c = document.getElementById("editCaption").value.trim();
+  if (c) post.caption = c;
+  const lk = parseInt(document.getElementById("editLikes").value);
+  if (!isNaN(lk)) post.likes = lk;
+  closeModal(); renderFeed();
+}
+
+document.getElementById("modalOverlay").addEventListener("click", function(e){ if (e.target === this) closeModal(); });
+
+function exportHTML() {
+  // Build a self-contained snapshot of the current state baked into the HTML
+  var stateSnap = JSON.stringify(state);
+  var avatarSnap = JSON.stringify(postAvatars);
+
+  var template = '<!DOCTYPE html>\n<html lang="en">\n' + document.documentElement.innerHTML + '\n</html>';
+
+  // Replace the state and postAvatars initial values with current ones
+  template = template.replace(
+    /const state = \{[\s\S]*?\};\n\nconst avatarEmojis/,
+    'const state = ' + stateSnap + ';\n\nconst avatarEmojis'
+  );
+  template = template.replace(
+    /const postAvatars = \{\};/,
+    'const postAvatars = ' + avatarSnap + ';'
+  );
+
+  var blob = new Blob([template], { type: 'text/html' });
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'instagram_' + new Date().toISOString().slice(0,10) + '.html';
+  a.click();
+  URL.revokeObjectURL(a.href);
+
+  var toast = document.getElementById('saveToast');
+  toast.style.opacity = '1';
+  setTimeout(function(){ toast.style.opacity = '0'; }, 2500);
+}
+
+renderFeed();
+</script>
+
+
+</body>
+</html>
